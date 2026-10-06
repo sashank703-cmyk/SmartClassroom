@@ -1,0 +1,93 @@
+services:
+ 
+  mysql:
+    image: mysql:8.0
+    container_name: smartclassroom-mysql
+    restart: unless-stopped
+ 
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: smart_class
+      MYSQL_USER: smartclass_user
+      MYSQL_PASSWORD: smartclasspassword
+ 
+    ports:
+      - "3306:3306"
+ 
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/app/db/init_schema.sql:/docker-entrypoint-initdb.d/init_schema.sql:ro
+ 
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-uroot",
+          "-prootpassword"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+ 
+ 
+  backend:
+    build:
+      context: ./backend
+ 
+    container_name: smartclassroom-backend
+    restart: unless-stopped
+ 
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: smartclass_user
+      DB_PASSWORD: smartclasspassword
+      DB_NAME: smart_class
+ 
+      JWT_SECRET: change-this-to-a-long-random-secret
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 1440
+ 
+      CORS_ORIGINS: http://localhost
+ 
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM_NAME: SmartClassroom-UCJ
+ 
+      ASSIGNMENT_QUESTIONS_DIR: storage/assignment_questions
+      STUDENT_SUBMISSIONS_DIR: storage/student_submissions
+ 
+    depends_on:
+      mysql:
+        condition: service_healthy
+ 
+    volumes:
+      - backend_storage:/app/storage
+ 
+    expose:
+      - "8000"
+ 
+ 
+  frontend:
+    build:
+      context: ./frontend
+ 
+    container_name: smartclassroom-frontend
+    restart: unless-stopped
+ 
+    ports:
+      - "80:80"
+ 
+    depends_on:
+      - backend
+ 
+ 
+volumes:
+  mysql_data:
+  backend_storage:

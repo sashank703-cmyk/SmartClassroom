@@ -61,6 +61,7 @@ async def lifespan(app: FastAPI):
             pass
 
 app = FastAPI(
+    root_path="/api",
     title="SmartClassroom API",
     description="Backend API for SmartClassroom (University College of Jaffna) with JWT Auth, Role RBAC, Google App Password Email, and Dual File Storage.",
     version="1.0.0",
